@@ -1,4 +1,4 @@
-%define build_parpack 1
+%define build_parpack 0
 
 # To build PARPACK, we'll need a FORTRAN 77 MPI implementation.
 
