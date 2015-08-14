@@ -1,4 +1,6 @@
 %define build_parpack 0
+%define _disable_rebuild_configure 1
+%define _disable_lto 2
 
 # To build PARPACK, we'll need a FORTRAN 77 MPI implementation.
 
