@@ -1,52 +1,41 @@
-%define build_parpack 0
-%define _disable_rebuild_configure 1
-%define _disable_lto 2
+%define major		2
+%define libname		%mklibname %{name} %{major}
+%define develname	%mklibname %{name} -d
+%define plibname	%mklibname p%{name} %{major}
+%define pdevelname	%mklibname p%{name} -d
 
-# To build PARPACK, we'll need a FORTRAN 77 MPI implementation.
+%bcond_with	interface64
+%bcond_with	mpich
+%bcond_without	openmpi
 
-%define build_mpich 0
-%define build_openmpi 1
-
-%{?_with_parpack: %{expand: %%global build_parpack 1}}
-%{?_without_parpack: %{expand: %%global build_parpack 0}}
-
-%{?_with_mpich: %{expand: %%global build_mpich 1}}
-%{?_with_openmpi: %{expand: %%global build_openmpi 1}}
-%{?_without_mpich: %{expand: %%global build_mpich 0}}
-%{?_without_openmpi: %{expand: %%global build_openmpi 0}}
+%if %{with mpich} || %{with openmpi}
+%bcond_without	mpi
+%else
+%bcond_with	mpi
+%endif
 
 Name:		arpack
-Version:	3.1.5
+Version:	3.5.0
 Release:	1
 Group:		Sciences/Mathematics
 License:	BSD
 Summary:	Fortran 77 subroutines for solving large scale eigenvalue problems
-
-URL:		http://forge.scilab.org/index.php/p/arpack-ng/
-Source0:	http://forge.scilab.org/index.php/p/arpack-ng/downloads/get/arpack-ng-%{version}.tar.gz
-Provides:	%{name}-ng = %{version}-%{release}
-BuildRequires:	autoconf
+URL:		https://github.com/opencollab/arpack-ng
+Source0:	https://github.com/opencollab/arpack-ng/archive/%{version}/%{name}-%{version}.tar.gz
+BuildRequires:	cmake
+BuildRequires:	cmake(lapack)
 BuildRequires:	gcc-gfortran
 BuildRequires:	blas-devel
-BuildRequires:	lapack-devel
-BuildRequires:	openmpi
-
-%if %{build_parpack}
-%if %{build_mpich}
+%if %{with openmpi}
+BuildRequires:	cmake(MPI)
+BuildRequires:	openmpi-devel
+%endif
+%if %{with mpich}
 BuildRequires:	mpi2f77
-%endif
-%if %{build_openmpi}
-BuildRequires:	libopenmpi-devel
-%endif
+BuildRequires:	mpich2-devel
 %endif
 
-%define major		2
-%define libname		%mklibname %{name} %{major}
-%define develname	%mklibname %{name} -d
-%if %{build_parpack}
-%define plibname	%mklibname p%{name} %{major}
-%define pdevelname	%mklibname p%{name} -d
-%endif
+Provides:	%{name}-ng = %{version}-%{release}
 
 %description
 ARPACK is a collection of Fortran 77 subroutines designed to solve large
@@ -60,6 +49,11 @@ order n**2 floating point operations. This software is based upon an
 algorithmic variant of the Arnoldi process called the Implicitly
 Restarted Arnoldi Method (IRAM).
 
+%files
+%doc README TODO CHANGES COPYING PARPACK_CHANGES EXAMPLES DOCUMENTS
+
+#---------------------------------------------------------------------------
+
 %package -n %{libname}
 Summary:	Runtime libraries for ARPACK
 
@@ -69,6 +63,12 @@ Group:		Sciences/Mathematics
 ARPACK is a collection of Fortran 77 subroutines designed to solve
 large scale eigenvalue problems. This package contains runtime
 libraries needed to run arpack based applications.
+
+%files -n %{libname}
+%{_libdir}/lib%{name}.so.*
+%doc COPYING
+
+#---------------------------------------------------------------------------
 
 %package -n %{develname}
 Summary:	Files needed for developing ARPACK based applications
@@ -83,8 +83,14 @@ ARPACK is a collection of Fortran 77 subroutines designed to solve
 large scale eigenvalue problems. This package contains the .so
 library links used for building ARPACK based applications.
 
-%if %{build_parpack}
+%files -n %{develname}
+%{_libdir}/lib%{name}.so
+%{_libdir}/pkgconfig/%{name}.pc
+%doc COPYING
 
+#---------------------------------------------------------------------------
+
+%if %{with mpi}
 %package -n %{plibname}
 Summary:	Runtime libraries for PARPACK
 
@@ -97,6 +103,14 @@ libraries needed to run arpack based applications.
 
 PARPACK is a parallel version of ARPACK that utilizes MPI.
 
+%files -n %{plibname}
+%{_libdir}/libp%{name}.so.*
+%doc COPYING
+%endif
+
+#---------------------------------------------------------------------------
+
+%if %{with mpi}
 %package -n %{pdevelname}
 Summary:	Files needed for developing ARPACK based applications
 
@@ -110,67 +124,51 @@ large scale eigenvalue problems. PARPACK is a parallel version of
 ARPACK that utilizes MPI. This package contains the .so library 
 links used for building PARPACK based applications.
 
+%files -n %{pdevelname}
+%{_libdir}/libp%{name}.so
+%doc COPYING
 %endif
 
+#---------------------------------------------------------------------------
+
 %prep
+%setup -q -n %{name}-ng-%{version}
 
 # Whoa, a logical XOR implementation for RPM!
-%if !(%{build_mpich} || %{build_openmpi}) || (%{build_mpich} && %{build_openmpi})
+%if (%{without mpich} && %{without openmpi}) || (%{with mpich} && %{with openmpi})
 %{error:either MPICH or OpenMPI should be chosen}
 exit 1
 %endif
 
-%setup -q -n %{name}-ng-%{version}
-
-# The Autoconf ax_mpi.m4 file doesn't detect correct library sets.
-%if %{build_mpich}
-export MPILIBS="-lfmpich -lpmpich -lmpich"
-%endif
-%if %{build_openmpi}
-export MPILIBS="-lmpi_mpifh"
-%endif
-
-# Fix undefined __stack_chk_fail
-sed -i Makefile.am -e "s/\$(LAPACK_LIBS)/\$(LAPACK_LIBS) -lc/"
-
-# libtool forgets about MPI libs when linking PARPACK, fix it
-# (and __stack_chk_fail too)
-sed -i PARPACK/Makefile.am -e "s/\$(LAPACK_LIBS)/\$(LAPACK_LIBS) $MPILIBS -lc/"
-
-autoreconf -iv
-
-%configure2_5x \
-%if %{build_parpack}
---enable-mpi \
-%endif
---disable-static
-
 %build
+export CC=gcc
+export CXX=g++
+
+%cmake \
+	-DBUILD_SHARED_LIBS:BOOL=ON \
+	-DEXAMPLES:BOOL=OFF \
+%if %{with interface64}
+	-DINTERFACE64:BOOL=ON \
+%endif
+%if %{without interface64}
+	-DINTERFACE64:BOOL=OFF \
+%endif
+%if %{with mpi}
+	-DMPI:BOOL=ON \
+%if %{with openmpi}
+	-DMPIEXEC:FILEPATH=%{_libdir}/openmpi/bin/mpiexec \
+%endif
+%endif
+%if %{without mpi}
+	-DMPI:BOOL=OFF \
+%endif
+	%{nil}
 %make
 
 %install
-%makeinstall_std
+%makeinstall_std -C build
 
-%__rm -f %{buildroot}/%{_libdir}/*.la
-%__rm -f %{buildroot}/%{_bindir}/p??drv?
-
-%files
-%doc README TODO CHANGES COPYING PARPACK_CHANGES EXAMPLES DOCUMENTS
-#{_bindir}/dnsimp
-
-%files -n %{libname}
-%{_libdir}/lib%{name}.so.*
-
-%files -n %{develname}
-%{_libdir}/lib%{name}.so
-%{_libdir}/pkgconfig/%{name}.pc
-
-%if %{build_parpack}
-%files -n %{plibname}
-%{_libdir}/libp%{name}.so.*
-
-%files -n %{pdevelname}
-%{_libdir}/libp%{name}.so
-%endif
-
+# pkgconfig
+install -dm 0755 %{buildroot}/%{_libdir}/pkgconfig/
+install -pm 0644 build/%{name}.pc %{buildroot}/%{_libdir}/pkgconfig/
 
