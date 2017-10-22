@@ -32,7 +32,7 @@ BuildRequires:	openmpi-devel
 %endif
 %if %{with mpich}
 BuildRequires:	mpi2f77
-BuildRequires:	mpich2-devel
+BuildRequires:	mpich-devel
 %endif
 
 Provides:	%{name}-ng = %{version}-%{release}
@@ -141,8 +141,8 @@ exit 1
 %endif
 
 %build
-export CC=gcc
-export CXX=g++
+#export CC=gcc
+#export CXX=g++
 
 %cmake \
 	-DBUILD_SHARED_LIBS:BOOL=ON \
@@ -157,6 +157,9 @@ export CXX=g++
 	-DMPI:BOOL=ON \
 %if %{with openmpi}
 	-DMPIEXEC:FILEPATH=%{_libdir}/openmpi/bin/mpiexec \
+%endif
+%if %{with mpich}
+	-DMPIEXEC:FILEPATH=%{_libdir}/mpich/bin/mpiexec \
 %endif
 %endif
 %if %{without mpi}
