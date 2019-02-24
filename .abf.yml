@@ -1,3 +1,5 @@
-sources:
+removed_sources:
   arpack-3.5.0.tar.gz: acbbe14b03b323f84236553872396345204dea1e
+sources:
+  arpack-3.7.0.tar.gz: cb5a6e1f3c5ab231440bbe30f4a0808d76215e93
   arpack-ng-3.1.5.tar.gz: f5b492a70c10b39596e476d0c7958b4d85a40a29

@@ -15,7 +15,7 @@
 %endif
 
 Name:		arpack
-Version:	3.5.0
+Version:	3.7.0
 Release:	1
 Group:		Sciences/Mathematics
 License:	BSD
