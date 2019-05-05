@@ -9,19 +9,20 @@
 %bcond_without	openmpi
 
 %if %{with mpich} || %{with openmpi}
-%bcond_without	mpi
+%bcond_with	outmpi
 %else
 %bcond_with	mpi
 %endif
 
+Summary:	Fortran 77 subroutines for solving large scale eigenvalue problems
 Name:		arpack
 Version:	3.7.0
 Release:	1
 Group:		Sciences/Mathematics
 License:	BSD
-Summary:	Fortran 77 subroutines for solving large scale eigenvalue problems
 URL:		https://github.com/opencollab/arpack-ng
 Source0:	https://github.com/opencollab/arpack-ng/archive/%{version}/%{name}-%{version}.tar.gz
+Patch0:		%{name}-3.7.0-fix-install-path.patch
 BuildRequires:	cmake
 BuildRequires:	cmake(lapack)
 BuildRequires:	gcc-gfortran
@@ -50,13 +51,12 @@ algorithmic variant of the Arnoldi process called the Implicitly
 Restarted Arnoldi Method (IRAM).
 
 %files
-%doc README TODO CHANGES COPYING PARPACK_CHANGES EXAMPLES DOCUMENTS
+%doc README.md TODO CHANGES COPYING PARPACK_CHANGES EXAMPLES DOCUMENTS
 
 #---------------------------------------------------------------------------
 
 %package -n %{libname}
 Summary:	Runtime libraries for ARPACK
-
 Group:		Sciences/Mathematics
 
 %description -n %{libname}
@@ -72,7 +72,6 @@ libraries needed to run arpack based applications.
 
 %package -n %{develname}
 Summary:	Files needed for developing ARPACK based applications
-
 Group:		Sciences/Mathematics
 Requires:	%{libname} = %{version}-%{release}
 Provides:	%{name}-devel = %{version}-%{release}
@@ -84,8 +83,10 @@ large scale eigenvalue problems. This package contains the .so
 library links used for building ARPACK based applications.
 
 %files -n %{develname}
+%{_includedir}/%{name}/*.h
 %{_libdir}/lib%{name}.so
 %{_libdir}/pkgconfig/%{name}.pc
+%{_libdir}/cmake/%{name}-ng*.cmake
 %doc COPYING
 
 #---------------------------------------------------------------------------
@@ -93,7 +94,6 @@ library links used for building ARPACK based applications.
 %if %{with mpi}
 %package -n %{plibname}
 Summary:	Runtime libraries for PARPACK
-
 Group:		Sciences/Mathematics
 
 %description -n %{plibname}
@@ -113,7 +113,6 @@ PARPACK is a parallel version of ARPACK that utilizes MPI.
 %if %{with mpi}
 %package -n %{pdevelname}
 Summary:	Files needed for developing ARPACK based applications
-
 Group:		Sciences/Mathematics
 Requires:	%{libname} = %{version}-%{release}
 Provides:	p%{name}-devel = %{version}-%{release}
@@ -121,7 +120,7 @@ Provides:	p%{name}-devel = %{version}-%{release}
 %description -n %{pdevelname}
 ARPACK is a collection of Fortran 77 subroutines designed to solve
 large scale eigenvalue problems. PARPACK is a parallel version of
-ARPACK that utilizes MPI. This package contains the .so library 
+ARPACK that utilizes MPI. This package contains the .so library
 links used for building PARPACK based applications.
 
 %files -n %{pdevelname}
@@ -133,6 +132,7 @@ links used for building PARPACK based applications.
 
 %prep
 %setup -q -n %{name}-ng-%{version}
+%autopatch -p1
 
 # Whoa, a logical XOR implementation for RPM!
 %if (%{without mpich} && %{without openmpi}) || (%{with mpich} && %{with openmpi})
@@ -141,8 +141,8 @@ exit 1
 %endif
 
 %build
-#export CC=gcc
-#export CXX=g++
+export CC=gcc
+export CXX=g++
 
 %cmake \
 	-DBUILD_SHARED_LIBS:BOOL=ON \
@@ -166,12 +166,11 @@ exit 1
 	-DMPI:BOOL=OFF \
 %endif
 	%{nil}
-%make
+%make_build
 
 %install
-%makeinstall_std -C build
+%make_install -C build
 
 # pkgconfig
 install -dm 0755 %{buildroot}/%{_libdir}/pkgconfig/
 install -pm 0644 build/%{name}.pc %{buildroot}/%{_libdir}/pkgconfig/
-
