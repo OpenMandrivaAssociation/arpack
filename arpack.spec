@@ -16,14 +16,13 @@
 
 Summary:	Fortran 77 subroutines for solving large scale eigenvalue problems
 Name:		arpack
-Version:	3.7.0
+Version:	3.8.0
 Release:	1
 Group:		Sciences/Mathematics
 License:	BSD
 URL:		https://github.com/opencollab/arpack-ng
 Source0:	https://github.com/opencollab/arpack-ng/archive/%{version}/%{name}-%{version}.tar.gz
-Patch0:		%{name}-3.7.0-fix-install-path.patch
-BuildRequires:	cmake
+BuildRequires:	cmake ninja
 BuildRequires:	cmake(lapack)
 BuildRequires:	gcc-gfortran
 BuildRequires:	blas-devel
@@ -86,7 +85,7 @@ library links used for building ARPACK based applications.
 %{_includedir}/%{name}/*.h
 %{_libdir}/lib%{name}.so
 %{_libdir}/pkgconfig/%{name}.pc
-%{_libdir}/cmake/%{name}-ng*.cmake
+%{_libdir}/cmake/%{name}-ng
 %doc COPYING
 
 #---------------------------------------------------------------------------
@@ -140,7 +139,6 @@ links used for building PARPACK based applications.
 exit 1
 %endif
 
-%build
 export CC=gcc
 export CXX=g++
 
@@ -165,12 +163,10 @@ export CXX=g++
 %if %{without mpi}
 	-DMPI:BOOL=OFF \
 %endif
-	%{nil}
-%make_build
+	-G Ninja
+
+%build
+%ninja_build -C build
 
 %install
-%make_install -C build
-
-# pkgconfig
-install -dm 0755 %{buildroot}/%{_libdir}/pkgconfig/
-install -pm 0644 build/%{name}.pc %{buildroot}/%{_libdir}/pkgconfig/
+%ninja_install -C build
