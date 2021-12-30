@@ -23,7 +23,7 @@ License:	BSD
 URL:		https://github.com/opencollab/arpack-ng
 Source0:	https://github.com/opencollab/arpack-ng/archive/%{version}/%{name}-%{version}.tar.gz
 BuildRequires:	cmake ninja
-BuildRequires:	cmake(lapack)
+BuildRequires:	pkgconfig(lapack)
 BuildRequires:	gcc-gfortran
 BuildRequires:	blas-devel
 %if %{with openmpi}
