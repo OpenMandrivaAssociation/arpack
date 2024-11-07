@@ -74,7 +74,8 @@ Restarted Arnoldi Method (IRAM).
 
 %files
 %license COPYING
-%doc README.md TODO CHANGES COPYING PARPACK_CHANGES EXAMPLES DOCUMENTS
+%doc README.md TODO CHANGES PARPACK_CHANGES
+%doc EXAMPLES DOCUMENTS
 
 #----------------------------------------------------------------------
 
@@ -100,7 +101,7 @@ libraries needed to run arpack based applications.
 
 %package -n %{devname}
 Summary:	Files needed for developing ARPACK based applications
-Group:		Sciences/Mathematics
+Group:		Development/C
 Requires:	%{libname} = %{version}-%{release}
 Provides:	%{name}-devel = %{version}-%{release}
 Provides:	%{name}-ng-devel = %{version}-%{release}
@@ -113,7 +114,8 @@ library links used for building ARPACK based applications.
 %files -n %{devname}
 %license COPYING
 
-%dir %{_includedir}/%{name}/
+%dir %{_includedir}/%{name}
+
 %{_includedir}/%{name}/*.h
 %{_includedir}/%{name}/*.hpp
 %{_libdir}/lib%{name}.so
@@ -159,7 +161,7 @@ PARPACK is a parallel version of ARPACK that utilizes MPI.
 %if %{with mpi}
 %package -n %{pdevname}
 Summary:	Files needed for developing ARPACK based applications
-Group:		Sciences/Mathematics
+Group:		Development/C
 Requires:	%{libname} = %{version}-%{release}
 Provides:	p%{name}-devel = %{version}-%{release}
 
