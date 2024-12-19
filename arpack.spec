@@ -45,9 +45,8 @@ URL:		https://github.com/opencollab/arpack-ng
 Source0:	https://github.com/opencollab/arpack-ng/archive/%{version}/%{name}-%{version}.tar.gz
 BuildRequires:	cmake ninja
 BuildRequires:	gcc-gfortran
-#BuildRequires:	pkgconfig(lapack)
-#BuildRequires:	pkgconfig(blas)
 BuildRequires:	pkgconfig(flexiblas)
+BuildRequires:	cmake(eigen3)
 %if %{with openmpi}
 BuildRequires:	cmake(MPI)
 BuildRequires:	openmpi
