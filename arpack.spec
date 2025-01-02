@@ -247,8 +247,9 @@ done
 %if %{with tests}
 for d in build%{?arch64:{64,}}
 do
-	ln -fs %_vpath_builddir-$d build
+	ln -s %_vpath_builddir-$d build
 	pushd build
+	LD_LIBRARY_PATH=%{buildroot}%{_libdir} \
 	ctest
 	popd 1>/dev/null
 	rm build
