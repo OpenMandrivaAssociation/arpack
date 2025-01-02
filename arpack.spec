@@ -46,7 +46,8 @@ Source0:	https://github.com/opencollab/arpack-ng/archive/%{version}/%{name}-%{ve
 BuildRequires:	cmake ninja
 BuildRequires:	gcc-gfortran
 BuildRequires:	pkgconfig(flexiblas)
-BuildRequires:	cmake(eigen3)
+#BuildRequires:	cmake(eigen3)
+BuildRequires:	eigen-devel
 %if %{with openmpi}
 BuildRequires:	cmake(MPI)
 BuildRequires:	openmpi
